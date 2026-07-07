@@ -1,0 +1,57 @@
+/* Design tokens — single source of truth for colors, spacing, and motion.
+   Every other stylesheet consumes these instead of hardcoding values.
+   Light theme: white/near-white surfaces + small, deliberate pops of color. */
+:root {
+  --color-bg: #f8f8fc;
+  --color-bg-panel: #ffffff;
+  --color-bg-input: #f4f4f9;
+  --color-bg-bubble-user: #ede9fe;
+  --color-bg-bubble-bot: #ffffff;
+  --color-bg-hover: #f4f2fe;
+
+  --color-border: #ebebf3;
+  --color-border-input: #e3e3ef;
+  --color-border-strong: #d8d8e8;
+
+  --color-text: #191927;
+  --color-text-muted: #5c5c74;
+  --color-text-dim: #8a8aa2;
+  --color-text-faint: #aeaec2;
+
+  --color-accent: #7c6af7;
+  --color-accent-light: #a78bfa;
+  --color-accent-deep: #6366f1;
+
+  /* Soft "pill" pairs (background / text) used for badges, tags, and status.
+     This is the small, rotating color palette that gives the UI its
+     playful accent instead of a single flat brand color everywhere. */
+  --pill-violet-bg: #ede9fe;
+  --pill-violet-text: #6d28d9;
+  --pill-blue-bg: #dbeafe;
+  --pill-blue-text: #2563eb;
+  --pill-green-bg: #dcfce7;
+  --pill-green-text: #15803d;
+  --pill-amber-bg: #ffedd5;
+  --pill-amber-text: #c2410c;
+  --pill-rose-bg: #fce7f3;
+  --pill-rose-text: #be185d;
+
+  --color-success: #16a34a;
+  --color-danger: #e11d48;
+  --color-danger-soft-bg: #fef2f2;
+  --color-danger-soft-border: #fecdd3;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(25, 25, 39, 0.05);
+  --shadow-md: 0 6px 20px rgba(25, 25, 39, 0.06);
+  --shadow-lg: 0 12px 32px rgba(25, 25, 39, 0.10);
+
+  --transition-fast: 0.15s;
+  --transition-base: 0.2s;
+}
