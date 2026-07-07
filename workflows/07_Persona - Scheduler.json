@@ -1,0 +1,151 @@
+{
+  "name": "Persona - Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "e0ab31f6-0efb-49cc-b8f9-30ed24d995be",
+      "name": "Cron (every hour)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "users",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "eab965f8-ebf4-47be-946d-9f00547bfad3",
+      "name": "Read All Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Keeps active users whose schedule (HH:MM) matches the current hour.\n// $now (Luxon) forced to Europe/Paris so it doesn't depend on the n8n server's timezone.\nconst currentHour = $now.setZone('Europe/Paris').hour;\nconst rows = $input.all().map(i => i.json);\nconst out = [];\n\nfor (const u of rows) {\n  const active = u.active === 'TRUE' || u.active === true || u.active === 'true';\n  const schedule = (u.schedule || '').toString().trim();\n  const email = (u.email || '').toString().trim();\n  if (!active || !schedule || !email) continue;\n\n  const m = schedule.match(/^(\\d{1,2}):(\\d{2})$/);\n  if (!m) continue;\n  const hour = parseInt(m[1], 10);\n\n  if (hour === currentHour) {\n    out.push({ json: {\n      username: u.username,\n      email,\n      interests: u.interests || ''\n    } });\n  }\n}\n\nreturn out;\n"
+      },
+      "id": "c6c62a0a-9189-4748-aae1-dffd92d44005",
+      "name": "Filter by Schedule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "yzN0WTka6eztPTFf",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/yzN0WTka6eztPTFf"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {}
+      },
+      "id": "8757527f-dc68-4705-928d-c7579364c95d",
+      "name": "Generate Newsletter",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron (every hour)": {
+      "main": [
+        [
+          {
+            "node": "Read All Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Users": {
+      "main": [
+        [
+          {
+            "node": "Filter by Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Schedule": {
+      "main": [
+        [
+          {
+            "node": "Generate Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bc696d1f-a25b-4862-97e8-3e6c392cd222",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d62355de076b64b44c63db4d9de3855035293231158a41613aaf91c2a2b2978"
+  },
+  "nodeGroups": [],
+  "id": "P1sIE8gvzZpIaruI",
+  "tags": [
+    {
+      "updatedAt": "2026-06-02T18:06:43.789Z",
+      "createdAt": "2026-06-02T18:06:43.789Z",
+      "id": "R3KyYXIKjGnUGw5y",
+      "name": "persona"
+    }
+  ]
+}

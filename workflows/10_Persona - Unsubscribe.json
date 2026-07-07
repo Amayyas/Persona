@@ -1,0 +1,102 @@
+{
+  "name": "Persona - Unsubscribe",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "persona-unsubscribe",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "aa000001-0000-0000-0000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-480, 0],
+      "webhookId": "persona-unsubscribe-webhook-001"
+    },
+    {
+      "parameters": {
+        "documentId": { "__rl": true, "value": "YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "users", "mode": "name" },
+        "options": {}
+      },
+      "id": "aa000002-0000-0000-0000-000000000002",
+      "name": "Read All Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-260, 0],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "", "name": "Google Sheets account" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nconst username = (body.username || '').toString().trim();\n\nif (!username) {\n  return [{ json: { success: false, message: 'Username is required.' } }];\n}\n\nconst allRows = $input.all();\nconst userRow = allRows.find(row => row.json.username && row.json.username.toString().toLowerCase() === username.toLowerCase());\n\nif (!userRow) {\n  return [{ json: { success: false, message: 'User not found.' } }];\n}\n\nconst user = userRow.json;\n\nreturn [{ json: {\n  username: user.username,\n  email: user.email,\n  interests: user.interests || '',\n  schedule: user.schedule || '',\n  active: 'FALSE',\n  row_number: user.row_number\n} }];\n"
+      },
+      "id": "aa000003-0000-0000-0000-000000000003",
+      "name": "Prepare Unsubscribe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "users", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "username": "={{ $json.username }}",
+            "email": "={{ $json.email }}",
+            "interests": "={{ $json.interests }}",
+            "schedule": "={{ $json.schedule }}",
+            "active": "={{ $json.active }}"
+          },
+          "matchingColumns": ["username"],
+          "schema": [
+            { "id": "username", "displayName": "username", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "email", "displayName": "email", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "interests", "displayName": "interests", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "schedule", "displayName": "schedule", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "active", "displayName": "active", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "row_number", "displayName": "row_number", "required": false, "defaultMatch": false, "display": true, "type": "number", "canBeUsedToMatch": true, "readOnly": true, "removed": false }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "aa000004-0000-0000-0000-000000000004",
+      "name": "Deactivate Account",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [180, 0],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "", "name": "Google Sheets account" } }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"You have been successfully unsubscribed.\" }",
+        "options": {}
+      },
+      "id": "aa000005-0000-0000-0000-000000000005",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [400, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Read All Users", "type": "main", "index": 0 }]] },
+    "Read All Users": { "main": [[{ "node": "Prepare Unsubscribe", "type": "main", "index": 0 }]] },
+    "Prepare Unsubscribe": { "main": [[{ "node": "Deactivate Account", "type": "main", "index": 0 }]] },
+    "Deactivate Account": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "10000000-0000-0000-0000-000000000010",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "" },
+  "id": "persona-unsubscribe-workflow",
+  "tags": [{ "createdAt": "2025-01-01T00:00:00.000Z", "updatedAt": "2025-01-01T00:00:00.000Z", "id": "persona", "name": "persona" }]
+}

@@ -1,0 +1,381 @@
+{
+  "name": "Persona - Register User",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "username"
+            },
+            {
+              "name": "password"
+            },
+            {
+              "name": "email"
+            }
+          ]
+        }
+      },
+      "id": "af51c92c-3e32-4b91-b657-b0c26a8166d2",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "users",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "7f45e56a-8dcb-4ffb-bbd8-bfc215ad2bfe",
+      "name": "Read All Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -656,
+        112
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sha256(ascii) {\n  function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }\n  const mathPow = Math.pow;\n  const maxWord = mathPow(2, 32);\n  let result = '';\n  const words = [];\n  const asciiBitLength = ascii.length * 8;\n  let hash = [], k = [];\n  let primeCounter = 0;\n  const isComposite = {};\n  for (let candidate = 2; primeCounter < 64; candidate++) {\n    if (!isComposite[candidate]) {\n      for (let i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }\n      hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;\n      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;\n    }\n  }\n  ascii += '\\x80';\n  while (ascii.length % 64 - 56) ascii += '\\x00';\n  for (let i = 0; i < ascii.length; i++) {\n    const j = ascii.charCodeAt(i);\n    if (j >> 8) return;\n    words[i >> 2] |= j << ((3 - i) % 4) * 8;\n  }\n  words[words.length] = ((asciiBitLength / maxWord) | 0);\n  words[words.length] = (asciiBitLength);\n  for (let j = 0; j < words.length;) {\n    const w = words.slice(j, j += 16);\n    const oldHash = hash;\n    hash = hash.slice(0, 8);\n    for (let i = 0; i < 64; i++) {\n      const w15 = w[i - 15], w2 = w[i - 2];\n      const a = hash[0], e = hash[4];\n      const temp1 = hash[7]\n        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))\n        + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i]\n        + (w[i] = (i < 16) ? w[i] : (w[i - 16]\n            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7]\n            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);\n      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))\n        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));\n      hash = [(temp1 + temp2) | 0].concat(hash);\n      hash[4] = (hash[4] + temp1) | 0;\n    }\n    for (let i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }\n  }\n  for (let i = 0; i < 8; i++) {\n    for (let j = 3; j + 1; j--) {\n      const b = (hash[i] >> (j * 8)) & 255;\n      result += ((b < 16) ? 0 : '') + b.toString(16);\n    }\n  }\n  return result;\n}\nconst rawTrigger = $('Execute Workflow Trigger').first().json;\nlet data = {};\nif (rawTrigger.username || rawTrigger.password || rawTrigger.email) {\n  data = rawTrigger;\n} else if (rawTrigger.query) {\n  try { data = JSON.parse(rawTrigger.query); }\n  catch(e) {\n    rawTrigger.query.split(',').forEach(pair => {\n      const ci = pair.indexOf(':');\n      if (ci !== -1) data[pair.substring(0, ci).trim()] = pair.substring(ci + 1).trim();\n    });\n  }\n}\n\nconst username = (data.username || '').toString().trim();\nconst password = (data.password || '').toString();\nconst email = (data.email || '').toString().trim();\n\nif (!username || !password || !email) {\n  return [{ json: { status: 'error', message: 'All fields are required: username, password, email.' } }];\n}\nif (username.length < 3) {\n  return [{ json: { status: 'error', message: 'Username must be at least 3 characters.' } }];\n}\nif (password.length < 6) {\n  return [{ json: { status: 'error', message: 'Password must be at least 6 characters.' } }];\n}\n\nconst existingUsers = $input.all();\nconst userExists = existingUsers.some(row => row.json.username && row.json.username.toString().toLowerCase() === username.toLowerCase());\nif (userExists) {\n  return [{ json: { status: 'error', message: `Username \"${username}\" is already taken.` } }];\n}\n\nconst hash = sha256(password);\nconst id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {\n  const r = Math.random() * 16 | 0;\n  return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);\n});\n\nreturn [{ json: { status: 'ok', id, username, password_hash: hash, email, interests: '', schedule: '', active: 'TRUE', created_at: new Date().toISOString() } }];\n"
+      },
+      "id": "81bf7b7d-a0b3-480b-9997-4e19ef1d6de8",
+      "name": "Validate & Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-status-ok",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "51a3e968-1718-42a0-aea6-bca4b57bda27",
+      "name": "Username Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "users",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "username": "={{ $json.username }}",
+            "password_hash": "={{ $json.password_hash }}",
+            "email": "={{ $json.email }}",
+            "interests": "={{ $json.interests }}",
+            "schedule": "={{ $json.schedule }}",
+            "active": "={{ $json.active }}",
+            "created_at": "={{ $json.created_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "password_hash",
+              "displayName": "password_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interests",
+              "displayName": "interests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "schedule",
+              "displayName": "schedule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "active",
+              "displayName": "active",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "998a5928-6c50-4fa9-b416-0dc4c9096623",
+      "name": "Create Account",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-success",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "assign-message",
+              "name": "message",
+              "value": "=Account created successfully! Welcome {{ $('Validate & Prepare').first().json.username }}! You can now log in.",
+              "type": "string"
+            },
+            {
+              "id": "assign-username",
+              "name": "username",
+              "value": "={{ $('Validate & Prepare').first().json.username }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "46098d27-ce79-49ab-bfcf-cfce4ef6480e",
+      "name": "Return Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-error-success",
+              "name": "success",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "assign-error-message",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d1e27d5-50be-453b-8335-ed9bb5da603d",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read All Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Users": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare": {
+      "main": [
+        [
+          {
+            "node": "Username Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Username Available?": {
+      "main": [
+        [
+          {
+            "node": "Create Account",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Account": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "db38674d-b6fc-4828-82f0-65157408fdcc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d62355de076b64b44c63db4d9de3855035293231158a41613aaf91c2a2b2978"
+  },
+  "nodeGroups": [],
+  "id": "P9zkBOAMu0yRWsqN",
+  "tags": [
+    {
+      "updatedAt": "2026-06-02T18:06:43.789Z",
+      "createdAt": "2026-06-02T18:06:43.789Z",
+      "id": "R3KyYXIKjGnUGw5y",
+      "name": "persona"
+    }
+  ]
+}

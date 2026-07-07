@@ -1,0 +1,388 @@
+{
+  "name": "Persona - Update User",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "username"
+            },
+            {
+              "name": "field"
+            },
+            {
+              "name": "value"
+            }
+          ]
+        }
+      },
+      "id": "a6ac9726-4a3e-4b6f-8eda-8dd16d51a23a",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "users",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "908a7a70-eea4-48e9-bdd8-d8fcce0b3f56",
+      "name": "Read All Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -656,
+        112
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawTrigger = $('Execute Workflow Trigger').first().json;\nlet data = {};\nif (rawTrigger.username || rawTrigger.field || rawTrigger.value) {\n  data = rawTrigger;\n} else if (rawTrigger.query) {\n  try { data = JSON.parse(rawTrigger.query); }\n  catch(e) {\n    rawTrigger.query.split(',').forEach(pair => {\n      const ci = pair.indexOf(':');\n      if (ci !== -1) data[pair.substring(0, ci).trim()] = pair.substring(ci + 1).trim();\n    });\n  }\n}\n\nconst username = (data.username || '').toString().trim();\nconst field = (data.field || '').toString().trim().toLowerCase();\nconst value = (data.value || '').toString().trim();\n\nconst allowedFields = ['interests', 'email', 'schedule'];\nif (!username || !field || !value) {\n  return [{ json: { status: 'error', message: 'username, field, and value are required.' } }];\n}\nif (!allowedFields.includes(field)) {\n  return [{ json: { status: 'error', message: `Field cannot be modified. Allowed fields: ${allowedFields.join(', ')}.` } }];\n}\n\nif (field === 'email') {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  if (!emailRegex.test(value)) {\n    return [{ json: { status: 'error', message: \"Invalid email format.\" } }];\n  }\n}\nif (field === 'schedule') {\n  const timeRegex = /^([01]\\d|2[0-3]):([0-5]\\d)$/;\n  if (!timeRegex.test(value)) {\n    return [{ json: { status: 'error', message: 'Invalid time format. Use HH:MM (e.g. 08:30).' } }];\n  }\n}\n\nconst allRows = $input.all();\nconst userRow = allRows.find(row => row.json.username && row.json.username.toString().toLowerCase() === username.toLowerCase());\nif (!userRow) {\n  return [{ json: { status: 'error', message: 'User not found.' } }];\n}\n\nconst out = {\n    status: 'ok',\n    username: userRow.json.username,\n    interests: userRow.json.interests || '',\n    email: userRow.json.email || '',\n    schedule: userRow.json.schedule || '',\n    active: userRow.json.active || 'TRUE'\n  };\n  out[field] = value;\n  return [{ json: out }];\n"
+      },
+      "id": "8d988af6-300b-46d3-a889-7f5a44079b20",
+      "name": "Validate & Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-upd-ok",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7c42367a-5e1f-44c2-af0c-9dd4b75c2c8d",
+      "name": "Field Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "users",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": 0,
+            "username": "={{ $json.username }}",
+            "interests": "={{ $json.interests }}",
+            "email": "={{ $json.email }}",
+            "schedule": "={{ $json.schedule }}",
+            "active": "={{ $json.active }}"
+          },
+          "matchingColumns": [
+            "username"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "password_hash",
+              "displayName": "password_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interests",
+              "displayName": "interests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "schedule",
+              "displayName": "schedule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "active",
+              "displayName": "active",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e59141e4-a71e-40d1-a106-7891309c6b12",
+      "name": "Update",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "upd-s-success",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "upd-s-message",
+              "name": "message",
+              "value": "=Your {{ $('Validate & Prepare').first().json.field }} has been updated: {{ $('Validate & Prepare').first().json.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3e436520-00ee-4c6e-9f3e-dcfd9d3b2f65",
+      "name": "Return Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "upd-e-success",
+              "name": "success",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "upd-e-message",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "73dac8f5-3fbd-426d-8f5f-0bcdc5a040c0",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read All Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Users": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare": {
+      "main": [
+        [
+          {
+            "node": "Field Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Field Valid?": {
+      "main": [
+        [
+          {
+            "node": "Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4ad4ee48-b852-4f2c-8ce3-1360cb0f0676",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d62355de076b64b44c63db4d9de3855035293231158a41613aaf91c2a2b2978"
+  },
+  "nodeGroups": [],
+  "id": "45I9kSH5qboWZgiW",
+  "tags": [
+    {
+      "updatedAt": "2026-06-02T18:06:43.789Z",
+      "createdAt": "2026-06-02T18:06:43.789Z",
+      "id": "R3KyYXIKjGnUGw5y",
+      "name": "persona"
+    }
+  ]
+}

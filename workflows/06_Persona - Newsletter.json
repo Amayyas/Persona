@@ -1,0 +1,419 @@
+{
+  "name": "Persona - Newsletter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1403999f-3f28-40e6-9935-53f04f0f4fca",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1728,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dt-username",
+              "name": "username",
+              "value": "testuser",
+              "type": "string"
+            },
+            {
+              "id": "dt-email",
+              "name": "email",
+              "value": "test@example.com",
+              "type": "string"
+            },
+            {
+              "id": "dt-interests",
+              "name": "interests",
+              "value": "tech, science, AI",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fa07450a-3c9f-44f1-a59d-1d25f26d06fb",
+      "name": "Test Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1520,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Snua39Gj0SnMEllY",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/Snua39Gj0SnMEllY"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "1cea2129-94a0-41eb-b357-98663c81072e",
+      "name": "Fetch Articles",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1104,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const interests = ($('User Context').first().json.interests || '').toString();\nconst articles = $input.all().map(i => i.json);\n\nconst list = articles\n  .map((a, idx) => `${idx}. [${a.source}] ${a.title} — ${(a.summary || '').slice(0, 200)}`)\n  .join('\\n');\n\nconst prompt = `You are an editorial filter for a personalized newsletter.\nUser's interests: \"${interests}\".\n\nAvailable articles (numbered):\n${list}\n\nSelect ONLY the articles most relevant to these interests (maximum 7).\nReply STRICTLY with a JSON array containing the numbers of the selected articles, with no surrounding text.\nExample of a valid reply: [0, 4, 9]\nIf no article is relevant, reply: []`;\n\nreturn [{ json: { prompt, interests, articles } }];\n"
+      },
+      "id": "7dc03204-178f-4cf5-9d0b-a26b0772f35d",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}"
+      },
+      "id": "756578e0-0067-44a2-8cc2-9529901740c8",
+      "name": "AI Filtering",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -656,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = ($json.text || $json.response || $json.output || '').toString();\nconst articles = $('Prepare Prompt').first().json.articles || [];\n\nlet indices = [];\nconst match = raw.match(/\\[[\\s\\S]*?\\]/);\nif (match) {\n  try { indices = JSON.parse(match[0]); } catch (e) { indices = []; }\n}\n\nindices = indices\n  .filter(n => Number.isInteger(n) && n >= 0 && n < articles.length)\n  .slice(0, 7);\n\nconst selected = indices.map(i => articles[i]);\n\nif (selected.length === 0) {\n  return [{ json: { empty: true, message: 'No relevant article found for these interests.' } }];\n}\n\nreturn selected.map(a => ({ json: a }));\n"
+      },
+      "id": "fd801ad3-b1e9-4c9d-8e48-b2a7bc2fdd8d",
+      "name": "Filter Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const articles = $input.all().map(i => i.json).filter(a => a && !a.empty && a.title);\n\nconst list = articles\n  .map((a, idx) => `${idx}. Title: ${a.title} | Source: ${a.source} | Raw content: ${(a.summary || '').slice(0, 500)}`)\n  .join('\\n');\n\nconst prompt = `You are a newsletter writer. For EACH article below, write a 2-3 sentence summary in English, informative, neutral, and fluent.\n\nArticles:\n${list}\n\nReply STRICTLY with a JSON array, with no surrounding text, in the exact format:\n[{\"index\": 0, \"summary\": \"...\"}, {\"index\": 1, \"summary\": \"...\"}]`;\n\nreturn [{ json: { prompt, articles } }];\n"
+      },
+      "id": "86625bec-0bcc-4c3c-9ddb-b35e80e9a881",
+      "name": "Prepare Summaries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}"
+      },
+      "id": "23717904-fbab-4405-98d1-3574b6677254",
+      "name": "AI Summaries",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = ($json.text || $json.response || $json.output || '').toString();\nconst articles = $('Prepare Summaries').first().json.articles || [];\n\nlet parsed = [];\nconst match = raw.match(/\\[[\\s\\S]*\\]/);\nif (match) {\n  try { parsed = JSON.parse(match[0]); } catch (e) { parsed = []; }\n}\n\nconst byIndex = {};\nfor (const p of parsed) {\n  if (p && Number.isInteger(p.index)) {\n    byIndex[p.index] = (p.summary || '').toString().trim();\n  }\n}\n\nreturn articles.map((a, idx) => ({\n  json: { ...a, summary: byIndex[idx] || a.summary }\n}));\n"
+      },
+      "id": "f9e63960-1dbc-4952-9ed7-37c402cacf42",
+      "name": "Apply Summaries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "1be0072f-b1f0-41e4-b88f-8bf1e2c1b000",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1728,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reads the user data from whichever trigger started the workflow.\n// Works for the Manual Trigger (via \"Test Data\") AND for the call\n// from the Scheduler (via Execute Workflow Trigger): both provide the same shape.\nconst u = $input.first().json || {};\nreturn [{ json: {\n  username: (u.username || '').toString().trim(),\n  email: (u.email || '').toString().trim(),\n  interests: (u.interests || '').toString().trim()\n} }];\n"
+      },
+      "id": "be908370-3875-4860-9eb3-98d86e9662cb",
+      "name": "User Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const articles = $input.all().map(i => i.json).filter(a => a && a.title);\nconst user = $('User Context').first().json;\nconst username = user.username || 'dear reader';\nconst dateStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });\n\nconst itemsHtml = articles.map(a => `\n      <div style=\"margin:0 0 24px;padding:0 0 24px;border-bottom:1px solid #eeeeee;\">\n        <h2 style=\"margin:0 0 8px;font-size:18px;line-height:1.3;\">\n          <a href=\"${a.url}\" style=\"color:#1a1a1a;text-decoration:none;\">${a.title}</a>\n        </h2>\n        <p style=\"margin:0 0 6px;color:#555555;font-size:14px;line-height:1.55;\">${a.summary || ''}</p>\n        <span style=\"font-size:12px;color:#9b59b6;text-transform:uppercase;letter-spacing:.5px;\">${a.source}</span>\n      </div>`).join('');\n\nconst body = articles.length\n  ? itemsHtml\n  : '<p style=\"color:#777;font-size:14px;\">No relevant articles for your interests today.</p>';\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Persona Newsletter</title>\n</head>\n<body style=\"margin:0;padding:24px 0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;\">\n  <div style=\"max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;\">\n    <div style=\"background:#6b3fa0;padding:24px 32px;\">\n      <h1 style=\"margin:0;color:#ffffff;font-size:24px;\">Persona</h1>\n    </div>\n    <div style=\"padding:32px;\">\n      <p style=\"margin:0 0 24px;color:#666666;font-size:15px;\">\n        Hello <strong>${username}</strong>, here is your newsletter for ${dateStr}.\n      </p>\n      ${body}\n      <p style=\"margin:32px 0 0;font-size:12px;color:#999999;text-align:center;line-height:1.6;\">\n        You are receiving this email because you are subscribed to Persona.<br>\n        To unsubscribe, tell our chatbot \"unsubscribe\".\n      </p>\n    </div>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: {\n  email: user.email,\n  username,\n  subject: `Your Persona newsletter for ${dateStr}`,\n  html,\n  articleCount: articles.length\n} }];\n"
+      },
+      "id": "a6b9f4f3-c1fd-4898-87f1-4ce100f06cd1",
+      "name": "Build HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6403d92b-1867-4518-9492-ad99fa4b47ac",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        0
+      ],
+      "webhookId": "bee7b2a1-a359-4d09-8479-97e83d3c075f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "llama-3.3-70b-versatile",
+          "mode": "list",
+          "cachedResultName": "llama-3.3-70b-versatile"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        272
+      ],
+      "id": "9430485d-7593-4dff-a0d7-d1e647e8dbde",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAI account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Data": {
+      "main": [
+        [
+          {
+            "node": "User Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Articles": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Filtering",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Filtering": {
+      "main": [
+        [
+          {
+            "node": "Filter Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Articles": {
+      "main": [
+        [
+          {
+            "node": "Prepare Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Summaries": {
+      "main": [
+        [
+          {
+            "node": "AI Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summaries": {
+      "main": [
+        [
+          {
+            "node": "Apply Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "User Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Summaries": {
+      "main": [
+        [
+          {
+            "node": "Build HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Filtering",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Summaries",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ea73ae5-7d2f-42d8-acbe-1fe4b37ea9c3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d62355de076b64b44c63db4d9de3855035293231158a41613aaf91c2a2b2978"
+  },
+  "nodeGroups": [],
+  "id": "yzN0WTka6eztPTFf",
+  "tags": [
+    {
+      "updatedAt": "2026-06-02T18:06:43.789Z",
+      "createdAt": "2026-06-02T18:06:43.789Z",
+      "id": "R3KyYXIKjGnUGw5y",
+      "name": "persona"
+    }
+  ]
+}
