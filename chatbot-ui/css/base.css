@@ -1,0 +1,34 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Soft, slow-moving wash of color behind the UI — a light-theme echo of
+   the "confetti" accent palette, kept subtle enough to stay out of the way. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 15% 20%, rgba(124,106,247,0.07) 0%, transparent 55%),
+              radial-gradient(ellipse at 85% 15%, rgba(59,130,246,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 25% 90%, rgba(190,24,93,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 90% 85%, rgba(21,128,61,0.05) 0%, transparent 50%);
+  animation: bgShift 16s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes bgShift {
+  0%   { transform: scale(1) translate(0, 0); }
+  50%  { transform: scale(1.06) translate(-1%, 1%); }
+  100% { transform: scale(1) translate(1%, -1%); }
+}
+
+#sidebar, #chat { position: relative; z-index: 1; }

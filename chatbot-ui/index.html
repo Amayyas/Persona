@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Persona — Chat</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+</head>
+<body>
+
+<!-- Profile sidebar -->
+<div id="sidebar">
+  <h2>My Profile</h2>
+
+  <!-- Login form -->
+  <div id="profile-login">
+    <input id="prof-username" type="text" placeholder="Username" autocomplete="username" />
+    <input id="prof-password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="load-profile-btn">Load my profile</button>
+    <span id="profile-error"></span>
+  </div>
+
+  <!-- Profile card (shown after login) -->
+  <div id="profile-card">
+    <div>
+      <div class="profile-avatar">👤</div>
+      <div class="profile-name" id="prof-name">—</div>
+      <div class="profile-email" id="prof-email">—</div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-label profile-label--violet">🎯 Interests</div>
+      <div class="tag-list" id="prof-interests"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-label profile-label--blue">🕐 Newsletter Schedule</div>
+      <div class="profile-value" id="prof-schedule">—</div>
+    </div>
+
+    <button id="refresh-btn">↻ Refresh</button>
+
+    <!-- Unsubscribe confirmation -->
+    <div id="unsub-confirm" style="display:none">
+      <div class="unsub-warning">Confirm unsubscribe? You will no longer receive newsletters.</div>
+      <div class="unsub-actions">
+        <button id="unsub-yes">Confirm</button>
+        <button id="unsub-no">Cancel</button>
+      </div>
+    </div>
+
+    <button id="unsub-btn">Unsubscribe</button>
+  </div>
+
+  <button id="logout-btn" style="display:none">Log out</button>
+</div>
+
+<!-- Chat area -->
+<div id="chat">
+  <header>
+    <div class="logo">✦</div>
+    <h1>Persona</h1>
+    <span id="logged-user"></span>
+    <div class="status" id="status">online</div>
+  </header>
+
+  <div class="config-bar">
+    <span>n8n:</span>
+    <input id="url-input" type="text" value="http://localhost:5678" />
+  </div>
+
+  <div id="messages">
+    <div class="message bot">
+      <div class="avatar">✦</div>
+      <div class="bubble">Hello! I'm Persona, your personalized newsletter assistant. How can I help you?</div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <textarea id="input" rows="1" placeholder="Type your message…"></textarea>
+    <button id="send">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

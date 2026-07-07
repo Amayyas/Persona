@@ -1,0 +1,213 @@
+/* ── Profile sidebar ── */
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--color-bg-panel);
+  border-right: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  gap: 20px;
+  animation: slideInLeft 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-30px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+#sidebar h2 {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--pill-violet-text);
+  background: var(--pill-violet-bg);
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+}
+
+/* Profile login form */
+#profile-login { display: flex; flex-direction: column; gap: 10px; }
+
+#profile-login input {
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 13px;
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+#profile-login input::placeholder { color: var(--color-text-faint); }
+#profile-login input:focus { border-color: var(--color-accent); background: var(--color-bg-panel); }
+
+#load-profile-btn {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast), transform 0.1s;
+}
+#load-profile-btn:hover { opacity: 0.92; box-shadow: var(--shadow-md); }
+#load-profile-btn:active { transform: scale(0.98); }
+#load-profile-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+#profile-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  display: none;
+}
+
+/* Profile card */
+#profile-card {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeSlideIn 0.35s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.profile-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.profile-email {
+  font-size: 12px;
+  color: var(--color-text-dim);
+}
+
+.profile-section { display: flex; flex-direction: column; gap: 8px; }
+
+.profile-label {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+}
+.profile-label--violet { background: var(--pill-violet-bg); color: var(--pill-violet-text); }
+.profile-label--blue   { background: var(--pill-blue-bg);   color: var(--pill-blue-text); }
+
+.profile-value {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tag-empty {
+  color: var(--color-text-faint);
+  font-size: 12px;
+}
+
+/* Rotating "confetti" palette applied round-robin to interest tags —
+   see profileView.js's TAG_COLOR_CLASSES. */
+.tag {
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 11px;
+}
+.tag--violet { background: var(--pill-violet-bg); color: var(--pill-violet-text); }
+.tag--blue   { background: var(--pill-blue-bg);   color: var(--pill-blue-text); }
+.tag--green  { background: var(--pill-green-bg);  color: var(--pill-green-text); }
+.tag--amber  { background: var(--pill-amber-bg);  color: var(--pill-amber-text); }
+.tag--rose   { background: var(--pill-rose-bg);   color: var(--pill-rose-text); }
+
+#refresh-btn {
+  background: var(--pill-blue-bg);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--pill-blue-text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+  margin-top: 4px;
+}
+#refresh-btn:hover { filter: brightness(0.96); }
+#refresh-btn.spinning { animation: breathe 0.9s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
+}
+
+#unsub-btn {
+  background: transparent;
+  border: 1px solid var(--color-danger-soft-border);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+#unsub-btn:hover { background: var(--color-danger-soft-bg); }
+#unsub-btn.is-unsubscribed {
+  color: var(--color-text-dim);
+  border-color: var(--color-border-strong);
+  background: transparent;
+}
+#unsub-btn.is-unsubscribed:hover { background: transparent; }
+
+#unsub-confirm { background: var(--color-danger-soft-bg); border: 1px solid var(--color-danger-soft-border); border-radius: var(--radius-md); padding: 12px; }
+.unsub-warning { font-size: 12px; color: var(--color-danger); margin-bottom: 10px; line-height: 1.4; }
+.unsub-actions { display: flex; gap: 8px; }
+#unsub-yes, #unsub-no {
+  flex: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+#unsub-yes { background: var(--color-danger); color: white; }
+#unsub-no  { background: var(--color-bg-input); color: var(--color-text-muted); }
+#unsub-yes:hover, #unsub-no:hover { opacity: 0.85; }
+
+#logout-btn {
+  margin-top: auto;
+  background: transparent;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+#logout-btn:hover { border-color: var(--color-danger); color: var(--color-danger); background: var(--color-danger-soft-bg); }

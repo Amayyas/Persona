@@ -1,0 +1,6 @@
+{
+  "name": "persona-chatbot-ui",
+  "private": true,
+  "type": "module",
+  "description": "Static ES-module chat interface for Persona. No build step, no dependencies — serve the folder with any static file server."
+}

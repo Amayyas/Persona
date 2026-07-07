@@ -1,0 +1,221 @@
+/* ── Chat area ── */
+#chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 20px;
+}
+
+header {
+  padding: 20px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+header .logo {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  animation: logoSpin 18s linear infinite;
+  background-size: 200% 200%;
+  background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-light), var(--color-accent-deep), var(--color-accent));
+}
+
+@keyframes logoSpin {
+  0%   { background-position: 0% 50%;   filter: brightness(1); }
+  50%  { background-position: 100% 50%; filter: brightness(1.08); }
+  100% { background-position: 0% 50%;   filter: brightness(1); }
+}
+
+header h1 { font-size: 18px; font-weight: 800; color: var(--color-text); letter-spacing: -0.01em; }
+
+#logged-user {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pill-violet-text);
+  background: var(--pill-violet-bg);
+  border-radius: var(--radius-pill);
+  padding: 4px 11px;
+  display: none;
+  animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.status {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status.is-offline { color: var(--color-danger); }
+.status::before {
+  content: "";
+  width: 7px; height: 7px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.config-bar {
+  padding: 10px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.config-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border-input);
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 4px;
+  outline: none;
+}
+.config-bar input:focus { border-bottom-color: var(--color-accent); color: var(--color-text); }
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+#messages::-webkit-scrollbar { width: 4px; }
+#messages::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 4px; }
+
+.message {
+  display: flex;
+  gap: 10px;
+  max-width: 90%;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.bot  { align-self: flex-start; }
+
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.message.user .avatar { background: var(--pill-violet-bg); color: var(--pill-violet-text); }
+.message.bot  .avatar { background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light)); color: white; }
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius-2xl);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.message.user .bubble {
+  background: var(--color-bg-bubble-user);
+  color: var(--color-text);
+  border-bottom-right-radius: 4px;
+  transition: box-shadow var(--transition-base);
+}
+.message.user .bubble:hover { box-shadow: var(--shadow-sm); }
+
+.message.bot .bubble {
+  background: var(--color-bg-bubble-bot);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  border-bottom-left-radius: 4px;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.message.bot .bubble:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); }
+
+.typing .bubble { display: flex; gap: 4px; align-items: center; padding: 14px 16px; }
+.dot { width: 6px; height: 6px; background: var(--color-accent); border-radius: 50%; animation: bounce 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+#input-area {
+  padding: 16px 0 24px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+#input {
+  flex: 1;
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  font-size: 14px;
+  padding: 11px 14px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  max-height: 140px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+#input::placeholder { color: var(--color-text-faint); }
+#input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(124,106,247,0.14);
+}
+
+#send {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light));
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  width: 40px; height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity var(--transition-fast), transform 0.1s, box-shadow var(--transition-fast);
+}
+#send:hover { opacity: 0.92; box-shadow: var(--shadow-md); }
+#send:active { transform: scale(0.95); }
+#send:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+#send svg { width: 18px; height: 18px; fill: white; }
