@@ -1,0 +1,7 @@
+# GitHub's language detector (Linguist) excludes JSON by default, treating it
+# as "data" rather than code. That hides the n8n workflows — which are JSON
+# under the hood and make up most of this repository — from the language
+# stats bar, leaving only the smaller chatbot-ui frontend visible. This
+# forces the workflow files back into the count so the stats reflect the
+# actual codebase.
+workflows/*.json linguist-detectable=true

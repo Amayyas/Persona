@@ -1,6 +1,7 @@
 # Persona — Personalized AI News Aggregator
 
 [![CI](https://github.com/Amayyas/Persona/actions/workflows/ci.yml/badge.svg)](https://github.com/Amayyas/Persona/actions/workflows/ci.yml)
+[![Built with n8n](https://img.shields.io/badge/built%20with-n8n-EA4560?logo=n8n&logoColor=white)](https://n8n.io)
 
 Persona is an AI-powered personalized newsletter service. There is no dedicated graphical interface: the user interacts only through a chatbot to configure their profile, interests, and delivery schedule. The system then automatically sends a personalized newsletter at the chosen time.
 
